@@ -1,85 +1,98 @@
-import React, { Component } from 'react';
+import React, { useEffect } from 'react';
+import {useHttp} from '../hooks/http';
 
 import Summary from './Summary';
 
-class Character extends Component {
-  state = { loadedCharacter: {}, isLoading: false };
+const Character = props => {
+  // const [loadedCharacter, setLoadedCharacter] = useState({});
+  // const [isLoading, setIsLoading] = useState(false);
 
-  shouldComponentUpdate(nextProps, nextState) {
-    console.log('shouldComponentUpdate');
-    return (
-      nextProps.selectedChar !== this.props.selectedChar ||
-      nextState.loadedCharacter.id !== this.state.loadedCharacter.id ||
-      nextState.isLoading !== this.state.isLoading
-    );
+// console.log('rendering');
+  const [isLoading, fetchedData] = useHttp('https://swapi.co/api/people/' + props.selectedChar, [props.selectedChar])
+  let loadedCharacter = null;
+  if (fetchedData){
+    loadedCharacter = {
+        id: props.selectedChar,
+        name: fetchedData.name,
+        height: fetchedData.height,
+        colors: {
+          hair: fetchedData.hair_color,
+          skin: fetchedData.skin_color
+        },
+        gender: fetchedData.gender,
+        movieCount: fetchedData.films.length
+      };
   }
+  
+  // const fetchData = () => {
+  //   console.log(
+  //     'Sending Http request for new character with id ' +
+  //       props.selectedChar
+  //   );
+  //   setIsLoading(false);
+  //   fetch('https://swapi.co/api/people/' + props.selectedChar)
+  //     .then(response => {
+  //       if (!response.ok) {
+  //         throw new Error('Could not fetch person!');
+  //       }
+  //       return response.json();
+  //     })
+  //     .then(charData => {
+  //       const loadedCharacter = {
+  //         id: props.selectedChar,
+  //         name: charData.name,
+  //         height: charData.height,
+  //         colors: {
+  //           hair: charData.hair_color,
+  //           skin: charData.skin_color
+  //         },
+  //         gender: charData.gender,
+  //         movieCount: charData.films.length
+  //       };
+  //       setIsLoading(false);
+  //       setLoadedCharacter(loadedCharacter);
+  //     })
+  //     .catch(err => {
+  //       console.log(err);
+  //     });
+  // };
 
-  componentDidUpdate(prevProps) {
-    console.log('Component did update');
-    if (prevProps.selectedChar !== this.props.selectedChar) {
-      this.fetchData();
-    }
-  }
+  // useEffect(() => {
+  //   fetchData();
+  //   return () => {
+  //     console.log('cleaning up ...');
+  //   };
+  // }, [props.selectedChar]);
 
-  componentDidMount() {
-    this.fetchData();
-  }
+  useEffect(() => {
+    return () => {
+      console.log('component did umount.');
+    };
+  }, []);
 
-  fetchData = () => {
-    console.log(
-      'Sending Http request for new character with id ' +
-        this.props.selectedChar
-    );
-    this.setState({ isLoading: true });
-    fetch('https://swapi.co/api/people/' + this.props.selectedChar)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Could not fetch person!');
-        }
-        return response.json();
-      })
-      .then(charData => {
-        const loadedCharacter = {
-          id: this.props.selectedChar,
-          name: charData.name,
-          height: charData.height,
-          colors: {
-            hair: charData.hair_color,
-            skin: charData.skin_color
-          },
-          gender: charData.gender,
-          movieCount: charData.films.length
-        };
-        this.setState({ loadedCharacter: loadedCharacter, isLoading: false });
-      })
-      .catch(err => {
-        console.log(err);
-      });
-  };
+  // componentWillUnmount() {
+  //   console.log('Too soon...');
+  // }
 
-  componentWillUnmount() {
-    console.log('Too soon...');
-  }
-
-  render() {
+  
     let content = <p>Loading Character...</p>;
 
-    if (!this.state.isLoading && this.state.loadedCharacter.id) {
+    if (!isLoading && loadedCharacter) {
       content = (
         <Summary
-          name={this.state.loadedCharacter.name}
-          gender={this.state.loadedCharacter.gender}
-          height={this.state.loadedCharacter.height}
-          hairColor={this.state.loadedCharacter.colors.hair}
-          skinColor={this.state.loadedCharacter.colors.skin}
-          movieCount={this.state.loadedCharacter.movieCount}
+          name={loadedCharacter.name}
+          gender={loadedCharacter.gender}
+          height={loadedCharacter.height}
+          hairColor={loadedCharacter.colors.hair}
+          skinColor={loadedCharacter.colors.skin}
+          movieCount={loadedCharacter.movieCount}
         />
       );
-    } else if (!this.state.isLoading && !this.state.loadedCharacter.id) {
+    } else if (!isLoading && !loadedCharacter) {
       content = <p>Failed to fetch character.</p>;
     }
     return content;
-  }
-}
+  
+};
 
-export default Character;
+export default React.memo(Character);
